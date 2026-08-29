@@ -1,14 +1,22 @@
-actual learning/experiment journey:
+# Experiment Flow
 
-Where i started with
-        ↓
-What i tried
-        ↓
-What happened
-        ↓
-What i changed
-        ↓
-What i learned
-        ↓
-What's next
+This document records the learning and experimentation flow of the repository.
 
+The repository follows an implementation-first approach:
+
+```text
+Question
+   ↓
+Small experiment
+   ↓
+Run
+   ↓
+Observe output
+   ↓
+Break/change input
+   ↓
+Compare behavior
+   ↓
+Implement next layer
+   ↓
+Document observation

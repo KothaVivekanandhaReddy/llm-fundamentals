@@ -1,0 +1,1 @@
+The cat sat on the mat. The cat ate the rat. The dog sat on the log. The dog ate the frog. Natural language processing is the study of how computers understand and generate human language. Tokenization is the first step in any NLP pipeline.
