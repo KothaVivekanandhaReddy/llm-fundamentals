@@ -154,19 +154,11 @@ class WordTokenizer:
         return len(self.vocab)
 
 
-# =============================================================
-# TRAINING CORPUS
-# =============================================================
+from pathlib import Path
 
-corpus = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline."
-)
+CORPUS_PATH = Path(__file__).resolve().parent / "corpus.txt"
+
+corpus = CORPUS_PATH.read_text(encoding="utf-8")
 
 
 # =============================================================

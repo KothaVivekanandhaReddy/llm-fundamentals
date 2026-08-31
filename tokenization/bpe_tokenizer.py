@@ -331,16 +331,11 @@ class BPETokenizer:
 # TRAINING CORPUS
 # =============================================================
 
-corpus = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline."
-)
+from pathlib import Path
 
+CORPUS_PATH = Path(__file__).resolve().parent / "corpus.txt"
+
+corpus = CORPUS_PATH.read_text(encoding="utf-8")
 
 # =============================================================
 # TRAIN TOKENIZER
@@ -472,3 +467,18 @@ for rank, (pair, new_token) in enumerate(
         f"{repr(pair[1])} "
         f"-> {repr(new_token)}"
     )
+
+def pre_tokenize(text):
+    return text.split()
+print("\nPRE-TOKENIZATION")
+
+words = pre_tokenize(corpus)
+
+print("First 30 pieces:")
+print(words[:30])
+
+print("\nRAW CHARACTER COUNT:")
+print(len(corpus))
+
+print("\nPRE-TOKENIZED PIECES:")
+print(len(words))

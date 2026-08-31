@@ -1,41 +1,62 @@
-
 """
-07 - Tokenizer Evaluation
+Tokenizer Evaluation
 
-Evaluates the six tokenizer implementations:
+Evaluates:
+    Character
+    Word
+    BPE
+    Byte-Level BPE
+    WordPiece
+    Unigram
 
-1. Character
-2. Word
-3. BPE
-4. Byte-Level BPE
-5. WordPiece
-6. Unigram / SentencePiece-style
+All tokenizers:
+    - use the same corpus
+    - use the same test set
 
-IMPORTANT:
-This file does NOT change tokenizer implementations.
-It only evaluates their behavior on the same test set.
+Evaluation is separated into:
 
-Metrics:
-- Token count
-- Characters per token
-- Bytes per token
-- Tokens per character
-- Tokens per byte
-- UNK count
-- UNK rate
-- Round-trip success
-- Sequence length
+    ENCODE
+        SUCCESS / ERROR
+
+    COVERAGE
+        FULL / PARTIAL
+
+    LOSSLESS
+        YES / NO
+
+    EFFICIENCY
+        tokens / character
+        tokens / byte
+        characters / token
+        bytes / token
+
+    UNK
+        count / rate
 """
+
 
 from pathlib import Path
-from importlib.util import spec_from_file_location, module_from_spec
-
-
-TOKEN_DIR = Path(__file__).parent
+from importlib.util import (
+    spec_from_file_location,
+    module_from_spec
+)
 
 
 # ============================================================
-# LOAD TOKENIZER CLASSES
+# PATH
+# ============================================================
+
+TOKEN_DIR = Path(__file__).resolve().parent
+
+CORPUS_PATH = TOKEN_DIR / "corpus.txt"
+
+corpus = CORPUS_PATH.read_text(
+    encoding="utf-8"
+)
+
+
+# ============================================================
+# LOAD TOKENIZER CLASS
 # ============================================================
 
 def load_class(filename, class_name):
@@ -51,7 +72,10 @@ def load_class(filename, class_name):
 
     spec.loader.exec_module(module)
 
-    return getattr(module, class_name)
+    return getattr(
+        module,
+        class_name
+    )
 
 
 CharacterTokenizer = load_class(
@@ -86,56 +110,31 @@ UnigramTokenizer = load_class(
 
 
 # ============================================================
-# TRAINING CORPUS
-# ============================================================
-
-CORPUS = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline. "
-    "Machine learning and artificial intelligence are transforming "
-    "natural language processing. "
-    "Transformers are neural networks that process sequences "
-    "using attention mechanisms. "
-    "Language models predict the next token from previous tokens."
-)
-
-
-# ============================================================
 # TEST SET
 # ============================================================
 
 TEST_TEXTS = [
 
-    # Familiar English
     "The cat sat on the mat.",
 
     "Natural language processing",
 
     "tokenization pipeline",
 
-    # Morphology
     "unhappiness",
 
     "happiness unhappy happily",
 
     "internationalization",
 
-    # Technical
     "transformer attention mechanism",
 
     "def fibonacci(n): return n + 1",
 
-    # Punctuation / numbers
     "Hello, world!",
 
     "The answer is 42.",
 
-    # Unicode
     "你好世界",
 
     "नमस्ते दुनिया",
@@ -176,72 +175,84 @@ print("=" * 80)
 print("TRAINING TOKENIZERS")
 print("=" * 80)
 
-tokenizers["Character"].train(CORPUS)
 
-tokenizers["Word"].train(CORPUS)
+tokenizers["Character"].train(corpus)
+
+tokenizers["Word"].train(corpus)
 
 tokenizers["BPE"].train(
-    CORPUS,
+    corpus,
     num_merges=80
 )
 
 tokenizers["Byte-BPE"].train(
-    CORPUS,
+    corpus,
     num_merges=80
 )
 
 tokenizers["WordPiece"].train(
-    CORPUS,
+    corpus,
     vocab_size=160
 )
 
 tokenizers["Unigram"].train(
-    CORPUS,
+    corpus,
     vocab_size=160
 )
 
 
 # ============================================================
-# TOKEN DISPLAY
+# GET TOKEN PIECES
 # ============================================================
 
 def get_pieces(tokenizer, text, ids):
 
-    if hasattr(tokenizer, "tokenize"):
-
-        return tokenizer.tokenize(text)
-
-    if hasattr(tokenizer, "token_pieces"):
+    if hasattr(
+        tokenizer,
+        "token_pieces"
+    ):
 
         return tokenizer.token_pieces(ids)
 
-    return [str(token_id) for token_id in ids]
+    if hasattr(
+        tokenizer,
+        "tokenize"
+    ):
+
+        return tokenizer.tokenize(text)
+
+    if hasattr(
+        tokenizer,
+        "id_to_token"
+    ):
+
+        return [
+            tokenizer.id_to_token[token_id]
+            for token_id in ids
+        ]
+
+    return [
+        str(token_id)
+        for token_id in ids
+    ]
 
 
 # ============================================================
-# UNKNOWN TOKEN DETECTION
+# UNKNOWN TOKEN
 # ============================================================
 
-def is_unknown_piece(piece):
-
-    unknown_markers = {
-
-        "<UNK>",
-
-        "[UNK]",
-
-        "<unk>"
-    }
-
-    return piece in unknown_markers
+UNKNOWN_MARKERS = {
+    "<UNK>",
+    "[UNK]",
+    "<unk>"
+}
 
 
 def count_unknowns(pieces):
 
     return sum(
-        1
+        piece in UNKNOWN_MARKERS
         for piece in pieces
-        if is_unknown_piece(piece)
     )
 
 
@@ -251,17 +262,25 @@ def count_unknowns(pieces):
 
 def evaluate_one(tokenizer, text):
 
+    characters = len(text)
+
+    byte_count = len(
+        text.encode("utf-8")
+    )
+
     result = {
 
-        "success": False,
+        "encode_success": False,
+
+        "coverage": "UNKNOWN",
+
+        "lossless": False,
 
         "token_count": 0,
 
-        "characters": len(text),
+        "characters": characters,
 
-        "bytes": len(
-            text.encode("utf-8")
-        ),
+        "bytes": byte_count,
 
         "tokens_per_character": None,
 
@@ -273,13 +292,13 @@ def evaluate_one(tokenizer, text):
 
         "unk_count": 0,
 
-        "unk_rate": None,
-
-        "roundtrip": False,
+        "unk_rate": 0.0,
 
         "pieces": [],
 
         "ids": [],
+
+        "decoded": None,
 
         "error": None
     }
@@ -303,54 +322,82 @@ def evaluate_one(tokenizer, text):
             pieces
         )
 
-        result["success"] = True
 
-        result["token_count"] = token_count
+        result["encode_success"] = True
 
         result["ids"] = ids
 
         result["pieces"] = pieces
 
+        result["decoded"] = decoded
+
+        result["token_count"] = token_count
+
         result["unk_count"] = unk_count
 
-        result["roundtrip"] = (
+
+        # ----------------------------------------------------
+        # Coverage
+        # ----------------------------------------------------
+
+        if unk_count == 0:
+
+            result["coverage"] = "FULL"
+
+        else:
+
+            result["coverage"] = "PARTIAL"
+
+
+        # ----------------------------------------------------
+        # Losslessness
+        # ----------------------------------------------------
+
+        result["lossless"] = (
             decoded == text
+            and unk_count == 0
         )
+
+
+        # ----------------------------------------------------
+        # Efficiency
+        # ----------------------------------------------------
 
         if token_count > 0:
 
+            result["tokens_per_character"] = (
+                token_count /
+                characters
+            )
+
+            result["tokens_per_byte"] = (
+                token_count /
+                byte_count
+            )
+
             result["characters_per_token"] = (
-                result["characters"] /
+                characters /
                 token_count
             )
 
             result["bytes_per_token"] = (
-                result["bytes"] /
+                byte_count /
                 token_count
             )
-
-        if result["characters"] > 0:
-
-            result["tokens_per_character"] = (
-                token_count /
-                result["characters"]
-            )
-
-        if result["bytes"] > 0:
-
-            result["tokens_per_byte"] = (
-                token_count /
-                result["bytes"]
-            )
-
-        if token_count > 0:
 
             result["unk_rate"] = (
                 unk_count /
                 token_count
             )
 
+
     except Exception as error:
+
+        result["encode_success"] = False
+
+        result["coverage"] = "ERROR"
+
+        result["lossless"] = False
 
         result["error"] = str(error)
 
@@ -359,14 +406,8 @@ def evaluate_one(tokenizer, text):
 
 
 # ============================================================
-# DETAILED EVALUATION
+# RUN ALL TESTS
 # ============================================================
-
-print("\n")
-print("=" * 80)
-print("DETAILED EVALUATION")
-print("=" * 80)
-
 
 all_results = {}
 
@@ -375,36 +416,100 @@ for name, tokenizer in tokenizers.items():
 
     all_results[name] = {}
 
-    print("\n")
-    print("=" * 80)
-    print(name.upper())
-    print("=" * 80)
-
     for text in TEST_TEXTS:
 
-        result = evaluate_one(
+        all_results[name][text] = evaluate_one(
             tokenizer,
             text
         )
 
-        all_results[name][text] = result
 
-        print("\n" + "-" * 70)
+# ============================================================
+# DETAILED RESULTS
+# ============================================================
+
+print("\n")
+print("=" * 80)
+print("DETAILED RESULTS")
+print("=" * 80)
+
+
+for text in TEST_TEXTS:
+
+    print("\n")
+    print("=" * 80)
+
+    print(
+        f"TEXT: {text}"
+    )
+
+    print("=" * 80)
+
+    print(
+        f"Characters : {len(text)}"
+    )
+
+    print(
+        f"UTF-8 bytes: "
+        f"{len(text.encode('utf-8'))}"
+    )
+
+
+    for name in tokenizers:
+
+        result = all_results[name][text]
+
+        print("\n" + "-" * 60)
+
+        print(name)
+
+        # ----------------------------------------------------
+        # Encode
+        # ----------------------------------------------------
 
         print(
-            f"Text: {text}"
+            f"Encode     : "
+            f"{'SUCCESS' if result['encode_success'] else 'ERROR'}"
         )
 
-        if not result["success"]:
+
+        if not result["encode_success"]:
 
             print(
-                f"ERROR: {result['error']}"
+                f"Error      : "
+                f"{result['error']}"
             )
 
             continue
 
+
+        # ----------------------------------------------------
+        # Coverage
+        # ----------------------------------------------------
+
         print(
-            f"Pieces: {result['pieces']}"
+            f"Coverage   : "
+            f"{result['coverage']}"
+        )
+
+
+        # ----------------------------------------------------
+        # Lossless
+        # ----------------------------------------------------
+
+        print(
+            f"Lossless   : "
+            f"{'YES' if result['lossless'] else 'NO'}"
+        )
+
+
+        # ----------------------------------------------------
+        # Tokens
+        # ----------------------------------------------------
+
+        print(
+            f"Pieces     : "
+            f"{result['pieces']}"
         )
 
         print(
@@ -412,18 +517,28 @@ for name, tokenizer in tokenizers.items():
             f"{result['token_count']}"
         )
 
+
+        # ----------------------------------------------------
+        # UNK
+        # ----------------------------------------------------
+
         print(
-            f"Characters: "
-            f"{result['characters']}"
+            f"UNK count  : "
+            f"{result['unk_count']}"
         )
 
         print(
-            f"UTF-8 bytes: "
-            f"{result['bytes']}"
+            f"UNK rate   : "
+            f"{result['unk_rate']:.3f}"
         )
 
+
+        # ----------------------------------------------------
+        # Efficiency
+        # ----------------------------------------------------
+
         print(
-            f"Tokens/character: "
+            f"Tokens/char: "
             f"{result['tokens_per_character']:.3f}"
         )
 
@@ -433,7 +548,7 @@ for name, tokenizer in tokenizers.items():
         )
 
         print(
-            f"Characters/token: "
+            f"Chars/token: "
             f"{result['characters_per_token']:.3f}"
         )
 
@@ -442,125 +557,16 @@ for name, tokenizer in tokenizers.items():
             f"{result['bytes_per_token']:.3f}"
         )
 
-        print(
-            f"UNK count: "
-            f"{result['unk_count']}"
-        )
-
-        print(
-            f"UNK rate: "
-            f"{result['unk_rate']:.3f}"
-        )
-
-        print(
-            f"Roundtrip: "
-            f"{'PASS' if result['roundtrip'] else 'FAIL'}"
-        )
-
 
 # ============================================================
-# AGGREGATE METRICS
+# AGGREGATE
 # ============================================================
 
 print("\n\n")
-print("=" * 100)
+print("=" * 110)
 print("AGGREGATE EVALUATION")
-print("=" * 100)
+print("=" * 110)
 
-
-summary = {}
-
-
-for name in tokenizers:
-
-    results = [
-        result
-        for result in all_results[name].values()
-        if result["success"]
-    ]
-
-    if not results:
-
-        continue
-
-    total_tokens = sum(
-        result["token_count"]
-        for result in results
-    )
-
-    total_characters = sum(
-        result["characters"]
-        for result in results
-    )
-
-    total_bytes = sum(
-        result["bytes"]
-        for result in results
-    )
-
-    total_unk = sum(
-        result["unk_count"]
-        for result in results
-    )
-
-    passed = sum(
-        result["roundtrip"]
-        for result in results
-    )
-
-    summary[name] = {
-
-        "texts": len(results),
-
-        "total_tokens": total_tokens,
-
-        "total_characters": total_characters,
-
-        "total_bytes": total_bytes,
-
-        "tokens_per_character": (
-            total_tokens /
-            total_characters
-        ),
-
-        "tokens_per_byte": (
-            total_tokens /
-            total_bytes
-        ),
-
-        "characters_per_token": (
-            total_characters /
-            total_tokens
-        ),
-
-        "bytes_per_token": (
-            total_bytes /
-            total_tokens
-        ),
-
-        "unk_count": total_unk,
-
-        "unk_rate": (
-            total_unk /
-            total_tokens
-        ),
-
-        "roundtrip_pass": passed,
-
-        "roundtrip_total": len(results),
-
-        "roundtrip_rate": (
-            passed /
-            len(results)
-        )
-    }
-
-
-# ============================================================
-# SUMMARY TABLE
-# ============================================================
-
-print("\n")
 
 print(
     f"{'Tokenizer':15}"
@@ -571,29 +577,129 @@ print(
     f"{'Byte/Tok':>10}"
     f"{'UNK':>8}"
     f"{'UNK %':>9}"
-    f"{'RT %':>8}"
+    f"{'Lossless':>10}"
+    f"{'Coverage':>12}"
 )
 
-print("-" * 100)
+
+print("-" * 110)
 
 
-for name, data in summary.items():
+aggregate = {}
+
+
+for name in tokenizers:
+
+    results = [
+        all_results[name][text]
+        for text in TEST_TEXTS
+    ]
+
+
+    successful = [
+        result
+        for result in results
+        if result["encode_success"]
+    ]
+
+
+    total_tokens = sum(
+        result["token_count"]
+        for result in successful
+    )
+
+
+    total_characters = sum(
+        result["characters"]
+        for result in successful
+    )
+
+
+    total_bytes = sum(
+        result["bytes"]
+        for result in successful
+    )
+
+
+    total_unk = sum(
+        result["unk_count"]
+        for result in successful
+    )
+
+
+    lossless_count = sum(
+        result["lossless"]
+        for result in successful
+    )
+
+
+    full_coverage_count = sum(
+        result["coverage"] == "FULL"
+        for result in successful
+    )
+
+
+    encode_errors = sum(
+        not result["encode_success"]
+        for result in results
+    )
+
+
+    aggregate[name] = {
+
+        "total_tokens": total_tokens,
+
+        "tokens_per_character": (
+            total_tokens /
+            total_characters
+        ) if total_characters else 0,
+
+        "tokens_per_byte": (
+            total_tokens /
+            total_bytes
+        ) if total_bytes else 0,
+
+        "characters_per_token": (
+            total_characters /
+            total_tokens
+        ) if total_tokens else 0,
+
+        "bytes_per_token": (
+            total_bytes /
+            total_tokens
+        ) if total_tokens else 0,
+
+        "unk": total_unk,
+
+        "unk_rate": (
+            total_unk /
+            total_tokens
+        ) if total_tokens else 0,
+
+        "lossless": lossless_count,
+
+        "coverage": full_coverage_count,
+
+        "errors": encode_errors
+    }
+
 
     print(
         f"{name:15}"
-        f"{data['total_tokens']:10d}"
-        f"{data['tokens_per_character']:10.3f}"
-        f"{data['tokens_per_byte']:10.3f}"
-        f"{data['characters_per_token']:10.3f}"
-        f"{data['bytes_per_token']:10.3f}"
-        f"{data['unk_count']:8d}"
-        f"{data['unk_rate'] * 100:8.2f}%"
-        f"{data['roundtrip_rate'] * 100:7.2f}%"
+        f"{total_tokens:10d}"
+        f"{aggregate[name]['tokens_per_character']:10.3f}"
+        f"{aggregate[name]['tokens_per_byte']:10.3f}"
+        f"{aggregate[name]['characters_per_token']:10.3f}"
+        f"{aggregate[name]['bytes_per_token']:10.3f}"
+        f"{total_unk:8d}"
+        f"{aggregate[name]['unk_rate'] * 100:8.2f}%"
+        f"{lossless_count:>6}/{len(TEST_TEXTS):<3}"
+        f"{full_coverage_count:>7}/{len(TEST_TEXTS):<3}"
     )
 
 
 # ============================================================
-# VOCABULARY SIZES
+# VOCABULARY
 # ============================================================
 
 print("\n")
@@ -604,118 +710,98 @@ print("=" * 80)
 
 for name, tokenizer in tokenizers.items():
 
-    if hasattr(
-        tokenizer,
-        "vocabulary_size"
-    ):
-
-        size = tokenizer.vocabulary_size()
-
-    elif hasattr(
-        tokenizer,
-        "vocab"
-    ):
-
-        size = len(tokenizer.vocab)
-
-    else:
-
-        size = "UNKNOWN"
-
     print(
-        f"{name:15} -> {size}"
+        f"{name:15} -> "
+        f"{tokenizer.vocabulary_size()}"
     )
 
 
 # ============================================================
-# BEST / WORST
+# ENCODE / COVERAGE SUMMARY
 # ============================================================
 
 print("\n")
 print("=" * 80)
-print("KEY OBSERVATIONS")
+print("ENCODE / COVERAGE SUMMARY")
 print("=" * 80)
 
 
-if summary:
+for name in tokenizers:
 
-    longest = max(
-        summary,
-        key=lambda name:
-            summary[name]["total_tokens"]
-    )
-
-    shortest = min(
-        summary,
-        key=lambda name:
-            summary[name]["total_tokens"]
-    )
-
-    lowest_unk = min(
-        summary,
-        key=lambda name:
-            summary[name]["unk_rate"]
-    )
-
-    best_roundtrip = max(
-        summary,
-        key=lambda name:
-            summary[name]["roundtrip_rate"]
-    )
+    data = aggregate[name]
 
     print(
-        f"Longest sequences : {longest}"
+        f"{name:15}"
+        f" Encode errors={data['errors']:2d}"
+        f"  Full coverage={data['coverage']:2d}/{len(TEST_TEXTS)}"
+        f"  Lossless={data['lossless']:2d}/{len(TEST_TEXTS)}"
     )
 
-    print(
-        f"Shortest sequences: {shortest}"
-    )
 
-    print(
-        f"Lowest UNK rate   : {lowest_unk}"
-    )
+# ============================================================
+# EFFICIENCY OBSERVATION
+# ============================================================
 
-    print(
-        f"Best roundtrip    : {best_roundtrip}"
-    )
+print("\n")
+print("=" * 80)
+print("EFFICIENCY OBSERVATION")
+print("=" * 80)
 
+
+lowest_token_count = min(
+    aggregate,
+    key=lambda name:
+        aggregate[name]["total_tokens"]
+)
+
+
+highest_chars_per_token = max(
+    aggregate,
+    key=lambda name:
+        aggregate[name]["characters_per_token"]
+)
+
+
+lowest_unk = min(
+    aggregate,
+    key=lambda name:
+        aggregate[name]["unk_rate"]
+)
+
+
+best_lossless = max(
+    aggregate,
+    key=lambda name:
+        aggregate[name]["lossless"]
+)
+
+
+print(
+    f"Fewest tokens       : "
+    f"{lowest_token_count}"
+)
+
+print(
+    f"Highest chars/token  : "
+    f"{highest_chars_per_token}"
+)
+
+print(
+    f"Lowest UNK rate      : "
+    f"{lowest_unk}"
+)
+
+print(
+    f"Most lossless tests  : "
+    f"{best_lossless}"
+)
+
+
+# ============================================================
+# COMPLETE
+# ============================================================
 
 print("\n")
 print("=" * 80)
 print("EVALUATION COMPLETE")
 print("=" * 80)
-
-print("""
-Interpret the results conceptually:
-
-Character
-    → simple
-    → long sequences
-    → vocabulary depends on characters
-    → poor unseen-character handling
-
-Word
-    → very short sequences
-    → severe OOV problem
-    → <UNK> can hide information loss
-
-BPE
-    → learns reusable subword pieces
-    → handles unseen words better
-    → vocabulary/sequence trade-off
-
-Byte-BPE
-    → starts from bytes
-    → robust Unicode coverage
-    → no character-level OOV problem
-
-WordPiece
-    → subword segmentation
-    → continuation pieces such as ##ing
-    → often produces [UNK] when segmentation fails
-
-Unigram
-    → probabilistic subword model
-    → chooses among possible segmentations
-    → segmentation can differ from BPE
-""")

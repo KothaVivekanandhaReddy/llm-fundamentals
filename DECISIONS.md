@@ -409,5 +409,55 @@ Production systems additionally involve:
 * highly optimized inference-time encoding
 
 ---
+# Decisions
 
+## Use One Shared Corpus
+
+All tokenizer implementations use the same `corpus.txt`.
+
+### Reason
+
+A tokenizer comparison is only meaningful when the training data is controlled.
+
+---
+
+## Use One Shared Test Set
+
+All tokenizer implementations are evaluated on the same 15 test strings.
+
+The test set intentionally includes:
+
+- normal English
+- unseen words
+- morphological variants
+- punctuation
+- numbers
+- source-code-like text
+- Chinese
+- Hindi
+- Japanese
+- emoji
+- mixed Unicode text
+
+### Reason
+
+This exposes differences in vocabulary coverage, segmentation, and Unicode handling.
+
+---
+
+## Keep Tokenizer Implementations From Scratch
+
+The tokenizer implementations are educational implementations rather than wrappers around production tokenizer libraries.
+
+### Reason
+
+The objective is to understand the internal mechanics:
+
+```text
+text
+→ representation
+→ tokenization
+→ vocabulary
+→ token IDs
+→ decoding
 

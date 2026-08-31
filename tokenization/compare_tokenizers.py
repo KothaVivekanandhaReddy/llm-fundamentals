@@ -1,38 +1,25 @@
 """
-07 - Tokenizer Comparison Lab
+Tokenizer Comparison Lab
 
-Compare:
-
-    Character
-    Word
-    BPE
-    Byte-Level BPE
-    WordPiece
-    Unigram
-
-All tokenizers use the SAME corpus
-and SAME test set.
-
-Metrics:
-
-    - token count
-    - character count
-    - UTF-8 byte count
-    - tokens / character
-    - tokens / byte
-    - round-trip
+All tokenizers:
+    - use the same corpus
+    - use the same test set
+    - are evaluated using the same metrics
 """
-
 
 import sys
 from pathlib import Path
+from importlib.util import (
+    spec_from_file_location,
+    module_from_spec
+)
 
 
-# =============================================================
-# IMPORT LOCAL TOKENIZERS
-# =============================================================
+# ============================================================
+# PATHS
+# ============================================================
 
-TOKEN_DIR = Path(__file__).parent
+TOKEN_DIR = Path(__file__).resolve().parent
 
 sys.path.insert(
     0,
@@ -40,16 +27,18 @@ sys.path.insert(
 )
 
 
-from importlib.util import (
-    spec_from_file_location,
-    module_from_spec
+CORPUS_PATH = TOKEN_DIR / "corpus.txt"
+
+corpus = CORPUS_PATH.read_text(
+    encoding="utf-8"
 )
 
 
-def load_class(
-    filename,
-    class_name
-):
+# ============================================================
+# LOAD CLASSES
+# ============================================================
+
+def load_class(filename, class_name):
 
     path = TOKEN_DIR / filename
 
@@ -99,29 +88,9 @@ UnigramTokenizer = load_class(
 )
 
 
-# =============================================================
-# CORPUS
-# =============================================================
-
-CORPUS = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline. "
-    "Machine learning and artificial intelligence are transforming "
-    "natural language processing. "
-    "Transformers are neural networks that process sequences "
-    "using attention mechanisms. "
-    "Language models predict the next token from previous tokens."
-)
-
-
-# =============================================================
+# ============================================================
 # TEST SET
-# =============================================================
+# ============================================================
 
 TEST_TEXTS = [
 
@@ -157,9 +126,9 @@ TEST_TEXTS = [
 ]
 
 
-# =============================================================
-# TRAIN
-# =============================================================
+# ============================================================
+# CREATE TOKENIZERS
+# ============================================================
 
 tokenizers = {
 
@@ -177,68 +146,100 @@ tokenizers = {
 }
 
 
+# ============================================================
+# TRAIN
+# ============================================================
+
 print("=" * 80)
 print("TRAINING TOKENIZERS")
 print("=" * 80)
 
-
 tokenizers["Character"].train(
-    CORPUS
+    corpus
 )
 
 tokenizers["Word"].train(
-    CORPUS
+    corpus
 )
 
 tokenizers["BPE"].train(
-    CORPUS,
+    corpus,
     num_merges=80
 )
 
 tokenizers["Byte-BPE"].train(
-    CORPUS,
+    corpus,
     num_merges=80
 )
 
 tokenizers["WordPiece"].train(
-    CORPUS,
+    corpus,
     vocab_size=160
 )
 
 tokenizers["Unigram"].train(
-    CORPUS,
+    corpus,
     vocab_size=160
 )
 
 
-# =============================================================
-# TOKEN PIECES
-# =============================================================
+# ============================================================
+# TOKEN DISPLAY
+# ============================================================
 
-def get_pieces(
-    tokenizer,
-    text,
-    ids
-):
+def get_pieces(tokenizer, text, ids):
+
+    if hasattr(
+        tokenizer,
+        "token_pieces"
+    ):
+        return tokenizer.token_pieces(ids)
 
     if hasattr(
         tokenizer,
         "tokenize"
     ):
+        return tokenizer.tokenize(text)
 
-        return tokenizer.tokenize(
-            text
-        )
+    if hasattr(
+        tokenizer,
+        "id_to_token"
+    ):
+        return [
+            tokenizer.id_to_token[token_id]
+            for token_id in ids
+        ]
 
     return [
-        tokenizer.id_to_token[token_id]
+        str(token_id)
         for token_id in ids
     ]
 
 
-# =============================================================
+# ============================================================
+# UNKNOWN TOKEN
+# ============================================================
+
+def is_unknown_piece(piece):
+
+    return piece in {
+        "<UNK>",
+        "[UNK]",
+        "<unk>"
+    }
+
+
+def count_unknowns(pieces):
+
+    return sum(
+        is_unknown_piece(piece)
+        for piece in pieces
+    )
+
+
+# ============================================================
 # RUN ONE TEST
-# =============================================================
+# ============================================================
 
 def run_test(
     name,
@@ -260,51 +261,109 @@ def run_test(
             ids
         )
 
+        unk_count = count_unknowns(
+            pieces
+        )
+
+        if decoded == text:
+
+            status = "PASS"
+
+        elif unk_count > 0:
+
+            status = "LOSSY"
+
+        else:
+
+            status = "FAIL"
+
         return {
+
             "name": name,
+
             "ids": ids,
+
             "pieces": pieces,
+
             "count": len(ids),
+
             "decoded": decoded,
-            "roundtrip": (
-                decoded == text
-            ),
+
+            "roundtrip": decoded == text,
+
+            "unk_count": unk_count,
+
+            "status": status,
+
             "error": None
         }
 
     except Exception as error:
 
         return {
+
             "name": name,
+
             "ids": [],
+
             "pieces": [],
+
             "count": 0,
+
             "decoded": None,
+
             "roundtrip": False,
+
+            "unk_count": 0,
+
+            "status": "ERROR",
+
             "error": str(error)
         }
 
 
-# =============================================================
-# DETAILED COMPARISON
-# =============================================================
+# ============================================================
+# RUN ALL EXPERIMENTS ONCE
+# ============================================================
+
+all_results = {}
+
+
+for name, tokenizer in tokenizers.items():
+
+    all_results[name] = {}
+
+    for text in TEST_TEXTS:
+
+        all_results[name][text] = run_test(
+            name,
+            tokenizer,
+            text
+        )
+
+
+# ============================================================
+# DETAILED RESULTS
+# ============================================================
+
+print("\n")
+print("=" * 80)
+print("DETAILED COMPARISON")
+print("=" * 80)
+
 
 for text in TEST_TEXTS:
-
-    print("\n")
-    print("=" * 80)
-
-    print(
-        f"TEXT: {text}"
-    )
-
-    print("=" * 80)
 
     chars = len(text)
 
     byte_count = len(
         text.encode("utf-8")
     )
+
+    print("\n")
+    print("=" * 80)
+    print(f"TEXT: {text}")
+    print("=" * 80)
 
     print(
         f"Characters : {chars}"
@@ -314,24 +373,23 @@ for text in TEST_TEXTS:
         f"UTF-8 bytes: {byte_count}"
     )
 
-    for name, tokenizer in (
-        tokenizers.items()
-    ):
+    for name in tokenizers:
 
-        result = run_test(
-            name,
-            tokenizer,
-            text
-        )
+        result = all_results[name][text]
 
         print(
             f"\n{name}"
         )
 
-        if result["error"]:
+        print(
+            f"  Status: "
+            f"{result['status']}"
+        )
+
+        if result["status"] == "ERROR":
 
             print(
-                f"  ERROR: "
+                f"  Error: "
                 f"{result['error']}"
             )
 
@@ -347,14 +405,23 @@ for text in TEST_TEXTS:
             f"{result['count']}"
         )
 
-        print(
-            f"  Tokens/char: "
-            f"{result['count'] / chars:.2f}"
-        )
+        if chars > 0:
+
+            print(
+                f"  Tokens/char: "
+                f"{result['count'] / chars:.3f}"
+            )
+
+        if byte_count > 0:
+
+            print(
+                f"  Tokens/byte: "
+                f"{result['count'] / byte_count:.3f}"
+            )
 
         print(
-            f"  Tokens/byte: "
-            f"{result['count'] / byte_count:.2f}"
+            f"  UNK count: "
+            f"{result['unk_count']}"
         )
 
         print(
@@ -363,15 +430,14 @@ for text in TEST_TEXTS:
         )
 
 
-# =============================================================
-# SUMMARY
-# =============================================================
+# ============================================================
+# TOKEN COUNT SUMMARY
+# ============================================================
 
 print("\n\n")
 print("=" * 100)
 print("TOKEN COUNT SUMMARY")
 print("=" * 100)
-
 
 print(
     f"{'Text':35}"
@@ -383,7 +449,6 @@ print(
     f"{'Uni':>8}"
 )
 
-
 print("-" * 100)
 
 
@@ -391,19 +456,13 @@ for text in TEST_TEXTS:
 
     results = []
 
-    for tokenizer in tokenizers.values():
+    for name in tokenizers:
 
-        result = run_test(
-            "",
-            tokenizer,
-            text
-        )
+        result = all_results[name][text]
 
-        if result["error"]:
+        if result["status"] == "ERROR":
 
-            results.append(
-                "ERR"
-            )
+            results.append("ERR")
 
         else:
 
@@ -424,9 +483,9 @@ for text in TEST_TEXTS:
     )
 
 
-# =============================================================
+# ============================================================
 # VOCABULARY SIZES
-# =============================================================
+# ============================================================
 
 print("\n")
 print("=" * 80)
@@ -434,9 +493,7 @@ print("VOCABULARY SIZES")
 print("=" * 80)
 
 
-for name, tokenizer in (
-    tokenizers.items()
-):
+for name, tokenizer in tokenizers.items():
 
     print(
         f"{name:15} -> "
@@ -444,47 +501,47 @@ for name, tokenizer in (
     )
 
 
-# =============================================================
-# ROUNDTRIP SUMMARY
-# =============================================================
+# ============================================================
+# STATUS SUMMARY
+# ============================================================
 
 print("\n")
 print("=" * 80)
-print("ROUNDTRIP SUMMARY")
+print("STATUS SUMMARY")
 print("=" * 80)
 
 
-for name, tokenizer in (
-    tokenizers.items()
-):
+for name in tokenizers:
 
-    passed = 0
-    failed = 0
-    errors = 0
+    results = [
+        all_results[name][text]
+        for text in TEST_TEXTS
+    ]
 
-    for text in TEST_TEXTS:
+    passed = sum(
+        result["status"] == "PASS"
+        for result in results
+    )
 
-        result = run_test(
-            name,
-            tokenizer,
-            text
-        )
+    lossy = sum(
+        result["status"] == "LOSSY"
+        for result in results
+    )
 
-        if result["error"]:
+    failed = sum(
+        result["status"] == "FAIL"
+        for result in results
+    )
 
-            errors += 1
-
-        elif result["roundtrip"]:
-
-            passed += 1
-
-        else:
-
-            failed += 1
+    errors = sum(
+        result["status"] == "ERROR"
+        for result in results
+    )
 
     print(
-        f"{name:15} "
+        f"{name:15}"
         f"PASS={passed:2d} "
+        f"LOSSY={lossy:2d} "
         f"FAIL={failed:2d} "
         f"ERROR={errors:2d}"
     )

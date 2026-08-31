@@ -1,1 +1,64 @@
-The cat sat on the mat. The cat ate the rat. The dog sat on the log. The dog ate the frog. Natural language processing is the study of how computers understand and generate human language. Tokenization is the first step in any NLP pipeline.
+Artificial intelligence is changing the way software is built.
+Machine learning allows computers to learn patterns from data.
+Deep learning uses neural networks to solve complex problems.
+Large language models process and generate human language.
+A transformer uses attention to understand relationships between tokens.
+
+Tokenization converts text into smaller units that a language model can process.
+Different tokenizers can produce very different token sequences.
+Some tokenizers use words, while others use subwords or bytes.
+A good tokenizer should represent text efficiently without losing information.
+
+Machine learning models learn from examples.
+The model receives input tokens and produces numerical representations.
+These representations are transformed through neural network layers.
+Training adjusts model parameters to reduce prediction error.
+
+Artificial intelligence systems can work with text, images, audio, and code.
+Language models can generate explanations, summaries, translations, and programs.
+Modern AI systems combine models with retrieval, tools, and external knowledge.
+
+The quick brown fox jumps over the lazy dog.
+The quick brown fox is running quickly across the field.
+Running, runner, runs, and rerunning are related word forms.
+
+Numbers are also part of real-world text.
+The model may process 123, 4567, 3.14159, and 2026.
+Programming code contains symbols such as (), {}, [], :, ;, =, +, -, *, and /.
+
+Email addresses look like example@example.com.
+Web addresses may contain https://example.com/path/to/page.
+File names may look like model_config.json or tokenizer.py.
+
+Some text contains CAPITAL letters and lowercase letters.
+Some text contains punctuation!
+Some text contains questions?
+Some text contains repeated words words words words.
+
+Unicode text is important too.
+English text can appear together with other languages.
+नमस्ते दुनिया
+こんにちは世界
+你好世界
+안녕하세요 세계
+
+AI engineering requires understanding how models represent information.
+Tokenization is only the first step.
+Embeddings transform token IDs into dense vectors.
+Attention allows tokens to interact with other tokens.
+Transformers use these mechanisms to process sequences.
+
+A tokenizer should be deterministic.
+The same input should produce the same tokenization.
+Encoding should produce token IDs.
+Decoding should reconstruct the original text whenever the tokenizer supports the input.
+
+Small experiments can reveal surprising behavior.
+Changing the corpus can change the learned vocabulary.
+Changing the vocabulary size can change token boundaries.
+Changing the tokenizer algorithm can change sequence length.
+
+This corpus is intentionally mixed.
+It contains natural language, repeated patterns, numbers, punctuation,
+code-like text, URLs, file names, and multiple writing systems.
+The same corpus should be used when comparing tokenizer behavior.

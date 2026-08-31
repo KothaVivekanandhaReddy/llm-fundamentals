@@ -84,7 +84,7 @@ class UnigramTokenizer:
         """
 
         return re.findall(
-            r"\w+|[^\w\s]",
+            r"\s+|\w+|[^\w\s]",
             text,
             flags=re.UNICODE
         )
@@ -335,98 +335,76 @@ class UnigramTokenizer:
 
     def encode(self, text):
 
-        words = self._split_words(text)
+        pieces = self._split_words(text)
 
         token_ids = []
 
-        for word in words:
+        for piece in pieces:
 
-            pieces = self._segment_word(
-                word
-            )
+        # Preserve whitespace
+            if piece.isspace():
 
-            if pieces is None:
+                for char in piece:
 
-                token_ids.append(
-                    self.vocab[
-                        self.unk_token
-                    ]
-                )
+                    if char not in self.vocab:
+
+                        self.vocab[char] = len(
+                            self.vocab
+                        )
+
+                        self.id_to_token[
+                            self.vocab[char]
+                        ] = char
+
+                        self.probabilities[
+                            char
+                        ] = 1e-5
+
+                    token_ids.append(
+                        self.vocab[char]
+                    )
 
                 continue
 
-            for piece in pieces:
+        # Normal word / punctuation
+            segmented = self._segment_word(
+                piece
+            ) 
 
+            if segmented is None:
+  
                 token_ids.append(
-                    self.vocab[piece]
+                    self.vocab[self.unk_token]
                 )
+
+            else: 
+
+                for token in segmented:
+ 
+                    token_ids.append(
+                        self.vocab[token]
+                    )
 
         return token_ids
 
-    # =========================================================
-    # TOKENIZE
-    # =========================================================
-
     def tokenize(self, text):
 
-        words = self._split_words(text)
+        ids = self.encode(text)
 
-        output = []
-
-        for word in words:
-
-            pieces = self._segment_word(
-                word
-            )
-
-            if pieces is None:
-
-                output.append(
-                    self.unk_token
-                )
-
-            else:
-
-                output.extend(pieces)
-
-        return output
-
+        return [
+            self.id_to_token[token_id]
+            for token_id in ids
+        ]
     # =========================================================
     # DECODE
     # =========================================================
 
     def decode(self, token_ids):
 
-        pieces = [
+        return "".join(
             self.id_to_token[token_id]
             for token_id in token_ids
-        ]
-
-        text = ""
-
-        for piece in pieces:
-
-            if piece == self.unk_token:
-
-                if text:
-                    text += " "
-
-                text += self.unk_token
-
-            elif piece in ".,!?;:%)]}":
-
-                text += piece
-
-            elif text:
-
-                text += " " + piece
-
-            else:
-
-                text = piece
-
-        return text
-
+        )
     # =========================================================
     # VOCABULARY SIZE
     # =========================================================
@@ -436,21 +414,11 @@ class UnigramTokenizer:
         return len(self.vocab)
 
 
-# =============================================================
-# TRAINING CORPUS
-# =============================================================
+from pathlib import Path
 
-corpus = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline. "
-    "Machine learning and artificial intelligence are transforming "
-    "natural language processing."
-)
+CORPUS_PATH = Path(__file__).resolve().parent / "corpus.txt"
+
+corpus = CORPUS_PATH.read_text(encoding="utf-8")
 
 
 # =============================================================

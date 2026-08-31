@@ -81,6 +81,8 @@ class ByteLevelBPETokenizer:
         # -----------------------------------------------------
 
         self.merge_ranks = {}
+        self.id_to_token = {}
+
 
     # =========================================================
     # INITIALIZE BYTE VOCABULARY
@@ -93,24 +95,7 @@ class ByteLevelBPETokenizer:
             for i in range(256)
         }
 
-    # =========================================================
-    # COUNT ADJACENT PAIRS
-    # =========================================================
 
-    def _get_pairs(self, tokens):
-
-        pairs = Counter()
-
-        for i in range(len(tokens) - 1):
-
-            pair = (
-                tokens[i],
-                tokens[i + 1]
-            )
-
-            pairs[pair] += 1
-
-        return pairs
 
     # =========================================================
     # MERGE PAIR
@@ -146,6 +131,21 @@ class ByteLevelBPETokenizer:
                 i += 1
 
         return merged
+    
+    def _get_pairs(self, tokens):
+
+        pairs = Counter()
+
+        for i in range(len(tokens) - 1):
+
+            pair = (
+                tokens[i],
+                tokens[i + 1]
+            )
+
+            pairs[pair] += 1
+
+        return pairs
 
     # =========================================================
     # TRAIN
@@ -354,22 +354,11 @@ class ByteLevelBPETokenizer:
         return len(self.vocab)
 
 
-# =============================================================
-# TRAINING CORPUS
-# =============================================================
+from pathlib import Path
 
-corpus = (
-    "The cat sat on the mat. "
-    "The cat ate the rat. "
-    "The dog sat on the log. "
-    "The dog ate the frog. "
-    "Natural language processing is the study of how computers "
-    "understand and generate human language. "
-    "Tokenization is the first step in any NLP pipeline. "
-    "Machine learning and artificial intelligence are transforming "
-    "natural language processing."
-)
+CORPUS_PATH = Path(__file__).resolve().parent / "corpus.txt"
 
+corpus = CORPUS_PATH.read_text(encoding="utf-8")
 
 # =============================================================
 # TRAIN
