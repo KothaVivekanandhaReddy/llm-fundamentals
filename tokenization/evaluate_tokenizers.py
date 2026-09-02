@@ -805,3 +805,20 @@ print("\n")
 print("=" * 80)
 print("EVALUATION COMPLETE")
 print("=" * 80)
+
+#How did you evaluate the tokenizers?"
+
+#I used the same corpus and same 15 test strings for every tokenizer.
+#I measured:
+#token count
+#character count
+#UTF-8 byte count
+#tokens per character
+#tokens per byte
+#characters per token
+#bytes per token
+#UNK count/rate
+#coverage
+#encoding errors
+#round-trip losslessness
+

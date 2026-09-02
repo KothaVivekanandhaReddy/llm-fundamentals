@@ -1,0 +1,6 @@
+| Metric           | Scratch Byte-BPE |     Hugging Face |
+| ---------------- | ---------------: | ---------------: |
+| Execution time   |          13.37 s |       **1.60 s** |
+| Throughput       |        0.28 MB/s |    **2.31 MB/s** |
+| Tokens           |        1,856,000 |          696,000 |
+| Throughput ratio |                — | **8.34× faster** |
