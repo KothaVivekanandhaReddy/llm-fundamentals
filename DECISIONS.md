@@ -7,7 +7,7 @@ Important decisions and why made them.
 
 ## 1. Purpose of the Tokenization 
 
-The tokenization module is an educational laboratory for understanding how different tokenization strategies convert raw text into model-readable token IDs.
+The tokenization module is an educational work for understanding how different tokenization strategies convert raw text into model-readable token IDs.
 
 The objective is not to reproduce production tokenizers exactly.
 
@@ -445,19 +445,29 @@ This exposes differences in vocabulary coverage, segmentation, and Unicode handl
 
 ---
 
-## Keep Tokenizer Implementations From Scratch
+## Embeddings :
+Embedding fundamentals implemented:
+Token IDs → embedding matrix → row lookup → dense vectors.
+Added cosine similarity and pairwise similarity experiment.
+Embedding weights are randomly initialized, so similarity has no learned semantic meaning yet.
 
-The tokenizer implementations are educational implementations rather than wrappers around production tokenizer libraries.
+### Random Initialization
+The initial embedding matrix is randomly initialized for experimentation.
 
-### Reason
+Reason:
+This allows us to understand the mechanics of embedding lookup before introducing learning.
 
-The objective is to understand the internal mechanics:
+Important:
+Random vectors do not contain semantic information. Meaningful embedding geometry emerges through training.
 
-```text
-text
-→ representation
-→ tokenization
-→ vocabulary
-→ token IDs
-→ decoding
+### Cosine Similarity
+Cosine similarity is used as an initial similarity metric.
 
+Reason:
+It measures directional alignment and is invariant to vector magnitude, which is useful when comparing learned representations.
+
+### L2 Normalization
+Vectors are normalized to unit length when appropriate.
+
+Reason:
+For normalized vectors, cosine similarity becomes equivalent to the dot product, which is useful for efficient vector retrieval.

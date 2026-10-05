@@ -1,0 +1,22 @@
+embedding.py : 
+1 — Embedding Fundamentals             ✅
+       │
+       ├── Token IDs
+       ├── Embedding matrix
+       ├── Lookup
+       ├── Dense vectors
+       └── Cosine similarity
+
+2 - Embedding Geometry : 
+Vector
+  ↓
+Dot Product
+  ↓
+Magnitude / L2 Norm
+  ↓
+Euclidean Distance
+  ↓
+Cosine Similarity
+  ↓
+L2 Normalization
+

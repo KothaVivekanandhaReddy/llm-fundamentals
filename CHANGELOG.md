@@ -115,3 +115,21 @@ These results are specific to this implementation, corpus, vocabulary size, and 
 ### Status
 
 Tokenizer implementation and comparison experiments completed.
+
+### Embeddings
+## 2026-10-04
+
+### 1
+- Implemented embedding lookup with NumPy.
+- Added embedding matrix and token ID row selection.
+- Added cosine similarity and pairwise comparison.
+- Verified embedding dimensions and lookup behavior.
+
+### 2
+- Implemented dot product.
+- Implemented L2 norm.
+- Implemented Euclidean distance.
+- Implemented cosine similarity.
+- Implemented L2 normalization.
+- Verified cosine similarity is invariant to vector scaling.
+
