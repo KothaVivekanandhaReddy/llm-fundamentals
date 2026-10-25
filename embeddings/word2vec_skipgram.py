@@ -1,5 +1,7 @@
-import numpy as np
+from random import seed
 
+import numpy as np
+np.random.seed(42)
 
 class SkipGramDataset:
 
@@ -69,29 +71,21 @@ class SkipGramDataset:
         return pairs
 
 
+
 class SkipGramModel:
 
-    def __init__(self, vocab_size, embedding_dim):
-
+    def __init__(self, vocab_size, embedding_dim, seed=42):
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
 
-        # Input embedding matrix
-        # Shape: (V, D)
+        rng = np.random.default_rng(seed)
+
         self.W_in = (
-            np.random.randn(
-                vocab_size,
-                embedding_dim
-            ) * 0.01
+            rng.standard_normal((vocab_size, embedding_dim)) * 0.01
         )
 
-        # Output/context matrix
-        # Shape: (D, V)
         self.W_out = (
-            np.random.randn(
-                embedding_dim,
-                vocab_size
-            ) * 0.01
+            rng.standard_normal((embedding_dim, vocab_size)) * 0.01
         )
 
     def forward(self, center_id):
@@ -126,10 +120,12 @@ class SkipGramModel:
         probabilities,
         target_id
     ):
-
-        return -np.log(
-            probabilities[target_id]
+        probability = np.clip(
+            probabilities[target_id],
+            1e-12,
+            1.0
         )
+        return -np.log(probability)
 
     def backward(
         self,
@@ -227,11 +223,21 @@ class SkipGramModel:
 
         history = []
 
+        # Reproducible shuffle order across runs
+        rng = np.random.default_rng(42)
+
         for epoch in range(epochs):
 
             total_loss = 0.0
 
-            for center_id, target_id in training_pairs:
+            # Shuffle training pairs every epoch
+            epoch_indices = rng.permutation(
+                len(training_pairs)
+            )
+
+            for index in epoch_indices:
+
+                center_id, target_id = training_pairs[index]
 
                 loss = self.train_step(
                     center_id,
@@ -258,6 +264,17 @@ class SkipGramModel:
                 )
 
         return history
+    @staticmethod
+    def cosine_similarity(a, b):
+
+        denominator = (
+            np.linalg.norm(a) *
+            np.linalg.norm(b)
+        )
+        if denominator == 0:
+            return 0.0
+
+        return float(np.dot(a, b) / denominator)
 
 
 if __name__ == "__main__":
@@ -300,7 +317,7 @@ if __name__ == "__main__":
     print("\nW_out shape:")
     print(model.W_out.shape)
 
-        # ==================================================
+    # ==================================================
     # FULL TRAINING
     # ==================================================
 
@@ -339,3 +356,49 @@ if __name__ == "__main__":
 
     print("\nFinal loss:")
     print(history[-1])
+
+    print("\n--- Learned Embeddings ---")
+
+    for word, word_id in dataset.word_to_id.items():
+
+        print(
+            f"{word:>5}: "
+            f"{model.W_in[word_id]}"
+        )
+
+    print("\n--- Learned Embedding Similarities ---")
+
+    words = list(dataset.word_to_id.keys())
+
+    for i in range(len(words)):
+
+        for j in range(i + 1, len(words)):
+
+            word_a = words[i]
+            word_b = words[j]
+
+            id_a = dataset.word_to_id[word_a]
+            id_b = dataset.word_to_id[word_b]
+
+            vector_a = model.W_in[id_a]
+            vector_b = model.W_in[id_b]
+
+            similarity = SkipGramModel.cosine_similarity(
+                vector_a,
+                vector_b
+            )
+
+            print(
+                f"{word_a:>5} ↔ "
+                f"{word_b:<5}: "
+                f"{similarity:.4f}"
+            )
+
+#includes:
+#- Automatic vocabulary construction.
+#- Context-window training-pair generation.
+#- A reusable SkipGramDataset class.
+#- A reusable SkipGramModel class.
+#- Forward and backward passes.
+#- Training across epochs.
+#- Learned embedding extraction and similarity comparisons.

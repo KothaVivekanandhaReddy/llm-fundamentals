@@ -1,7 +1,7 @@
-#implementation from scratch with NumPy. The important pieces are:
+#implementation from scratch with NumPy.
 
-#1.Input embedding matrix W_in
-#2.Output embedding matrix W_out
+#1.Input embedding : matrix W_in
+#2.Output embedding : matrix W_out
 
 #3.Forward pass:
 #context token → W_in → vector
@@ -15,6 +15,10 @@
 #8.Update W_in and W_out
 #9.Print loss during training
 
+#An embedding starts as a learned numerical representation. In Skip-gram, we take a word and its surrounding context words, 
+#and train the word's embedding to help predict those contexts. The model uses the embedding to produce scores over the 
+#vocabulary, applies a loss, and backpropagates the error into the embedding parameters. Over many examples, words with related 
+#context patterns can develop related vector representations.
 import numpy as np
 
 
@@ -268,3 +272,11 @@ print("\nFinal similarity:")
 print_similarities()
 
 print("\nTraining complete.")
+
+#includes:
+#- A manually defined vocabulary and training pairs.
+#- Input and output embedding matrices.
+#- Full softmax and cross-entropy.
+#- Backpropagation and gradient descent.
+#- Loss tracking and cosine similarity.
+#Limitation: The training examples are manually defined, and the data preparation is not reusable.

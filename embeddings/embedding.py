@@ -7,8 +7,8 @@
 #Dense vectors
 
 #Example: 
-#vocab_size = 10
-#embedding_dim = 4
+#vocab_size = 10 #total number of unique tokens
+#embedding_dim = 4 #size of the dense vector used to represent each individual token
 # means we create matrix of size 10 * 4 . row0 [...] row1[..] ... row9[...]
 # if input = [2,7,4] output is : [2,7,4] rows selction.. 
 # ID 2 → [0.6465, 0.1108, 0.7404, -0.6706]
@@ -34,7 +34,7 @@ class Embedding:
         return self.weights[token_ids]
 
     def cosine_similarity(self, a, b):
-        return np.dot(a, b) / (
+        return np.dot(a, b) / ( #dot product divided by the product of the magnitudes correctly measures the directional alignment of your token representations in vector space. 
             np.linalg.norm(a) * np.linalg.norm(b)
         )
 
@@ -78,3 +78,12 @@ if __name__ == "__main__":
                 f"Token {token_ids[j]}: "
                 f"{similarity:.4f}"
             )
+
+# Examples :
+#Different production LLMs scale these dimensions based on performance and parameter constraints:
+#BERT-base: vocab_size = ~30,522 | emb_dim = 768
+#GPT-2: vocab_size = 50,257 | emb_dim = 768
+#Llama 3 (8B): vocab_size = 128,256 | emb_dim = 4,096
+
+#  current vectors are random:  np.random.randn(vocab_size, embedding_dim) . cosine similarities currently have no semantic meaning.
+# An embedding matrix by itself does not contain useful semantics. Training is what makes the geometry meaningful.

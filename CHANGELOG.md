@@ -133,3 +133,27 @@ Tokenizer implementation and comparison experiments completed.
 - Implemented L2 normalization.
 - Verified cosine similarity is invariant to vector scaling.
 
+## 26-10-05
+### 3: Word2Vec Skip-Gram
+
+- Implemented Skip-Gram context-window generation.
+- Implemented input and output embedding matrices.
+- Implemented forward propagation.
+- Implemented softmax and cross-entropy loss.
+- Derived and implemented gradients.
+- Implemented backpropagation and gradient descent.
+- Implemented full multi-epoch training loop.
+- Trained on a toy corpus and observed loss decrease from 1.609425 to 0.843993.
+- Extracted learned embedding vectors and compared them using cosine similarity.
+
+###  4: Word2Vec Negative Sampling
+
+- Implemented negative sampling from scratch.
+- Implemented numerically stable sigmoid.
+- Implemented positive and negative pair objectives.
+- Implemented analytical gradients.
+- Implemented negative context sampling.
+- Implemented multi-epoch training.
+- Observed loss decrease from 2.7726 to 1.2888.
+- Extracted learned embeddings and compared them using cosine similarity.
+

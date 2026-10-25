@@ -1,7 +1,11 @@
+#Cosine similarity measures the angle/direction between vectors, not simply their size.
+#+1 → same direction
+#-1 → opposite direction
+#0 → orthogonal
 import numpy as np
 
 
-def dot_product(a, b):
+def dot_product(a, b): #interaction between vectors
     return np.dot(a, b)
 
 
@@ -9,7 +13,7 @@ def vector_norm(a):
     return np.linalg.norm(a)
 
 
-def cosine_similarity(a, b):
+def cosine_similarity(a, b): #compares vector direction
     dot = dot_product(a, b)
 
     norm_a = vector_norm(a)

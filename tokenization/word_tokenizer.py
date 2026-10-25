@@ -291,3 +291,12 @@ for token_id, token in tokenizer.id_to_token.items():
     print(
         f"{token_id:4d} -> {repr(token)}"
     )
+
+#conclusion : 
+#Word tokenization gives much shorter sequences because an entire word can become one token.
+#But the vocabulary becomes large and the OOV problem becomes severe.
+#For example, if internationalization wasn't in the vocabulary, the tokenizer could represent the entire word as <UNK>.
+#That gives a very low token count, but information has been lost.
+#I actually observed this in my experiment: Word had only 62 total tokens across the test set, but 27 of those were UNK and only 2 of 15 cases were lossless.
+
+#So I learned that lower token count doesn't necessarily mean better tokenization.

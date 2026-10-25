@@ -554,3 +554,18 @@ for rank, (pair, token_id) in enumerate(
         f"-> {merged_display!r}"
     )
 
+## Why Byte-Level BPE :
+#Standard character-based tokenization depends on the characters represented in the vocabulary.
+#Byte-level BPE starts from the 256 possible byte values and performs BPE over UTF-8 bytes.
+
+#Therefore arbitrary Unicode text can first be represented as bytes instead of requiring every Unicode character to exist in the vocabulary.
+
+#This became very clear in my test set. My standard Character and BPE implementations errored on emoji, 
+#while Byte-BPE successfully processed all 15 test cases, including Hindi, Chinese, Japanese, and emoji.
+
+#Why did Byte-BPE have more tokens than BPE :
+#They're not directly equivalent because the underlying representations are different.
+#Standard BPE starts from characters, while Byte-BPE starts from UTF-8 bytes. 
+#A Unicode character can occupy multiple bytes, so byte-level representation can initially require more units.
+
+#The advantage is universal byte coverage. So there's a trade-off between representation efficiency and robustness.

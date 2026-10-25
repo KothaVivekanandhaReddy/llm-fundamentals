@@ -2,7 +2,7 @@
 """
 05 - WordPiece Tokenizer
 
-Educational WordPiece implementation.
+ WordPiece implementation.
 
 Training:
     Character pieces
@@ -451,3 +451,9 @@ if __name__ == "__main__":
             "Roundtrip:",
             "PASS" if decoded == text else "FAIL"
         )
+
+#What did you learn from WordPiece?"
+
+#WordPiece is also a subword approach, but its vocabulary construction and segmentation objective differ from BPE.
+#In the implementation I observed continuation-style pieces such as ##ing.
+#It achieved 12/15 lossless cases in my test, with some [UNK] cases when the text couldn't be segmented using the learned vocabulary.

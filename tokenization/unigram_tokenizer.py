@@ -524,3 +524,7 @@ for sentence in test_sentences:
         f"Decoded: "
         f"{decoded}"
     )
+
+#Unigram takes a different approach from BPE. Instead of repeatedly merging pairs, it starts with candidate subword pieces and assigns probabilities to them.
+
+#A word can have multiple possible segmentations, and the tokenizer chooses a segmentation according to the model's probabilities.

@@ -180,3 +180,16 @@ for token_id, character in tokenizer.id_to_token.items():
     print(
         f"{token_id:3d} -> {display}"
     )
+
+#conclusion : 
+#Character tokenization is the simplest representation: each character becomes a token.
+
+#The advantage is simplicity and relatively straightforward coverage for characters present in the training vocabulary.
+
+#The major disadvantage is sequence length. A sentence with 100 characters can become roughly 100 tokens.
+
+#I also observed that my character tokenizer failed when the test set contained characters that weren't present in the
+#training corpus, such as emoji and some Unicode characters.
+
+#actual result:
+#In my test set it was lossless for 12 out of 15 cases and errored on 3 unseen-character cases.

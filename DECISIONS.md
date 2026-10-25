@@ -471,3 +471,30 @@ Vectors are normalized to unit length when appropriate.
 
 Reason:
 For normalized vectors, cosine similarity becomes equivalent to the dot product, which is useful for efficient vector retrieval.
+
+### Word2Vec Skip-Gram
+
+#### Separate Input and Output Matrices
+
+Used:
+- `W_in`: input/center-word embeddings
+- `W_out`: output/context representations
+
+Reason:
+This makes the Skip-Gram forward and backward passes explicit and easier to understand.
+
+####  Corpus
+
+Used:
+"The cat sat on the mat"
+
+Reason:
+The objective at this stage is understanding the training mechanism rather than producing high-quality language embeddings.
+
+Limitation:
+The corpus is far too small for meaningful semantic representations.
+
+#### Embedding Extraction
+
+Use `W_in` as the learned word embedding matrix for subsequent experiments.
+

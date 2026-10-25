@@ -6,6 +6,11 @@ Goal:
     Understand the original BPE idea used for
     subword tokenization.
 
+subword tokenization : 
+It gives a middle ground between character-level and word-level tokenization.
+Instead of requiring every complete word to exist in the vocabulary, frequently occurring pieces can be represented as reusable subwords.
+So a word that wasn't explicitly seen during training can potentially be constructed from known pieces.
+
 Pipeline:
 
     Text
@@ -48,6 +53,8 @@ Example:
     "low"
 
 
+
+The learned merge rules are then used during encoding of new text.
 This implementation is intentionally educational.
 It starts from characters rather than UTF-8 bytes.
 Byte-Level BPE is implemented separately in Step 4.
@@ -482,3 +489,13 @@ print(len(corpus))
 
 print("\nPRE-TOKENIZED PIECES:")
 print(len(words))
+
+#observation while training BPE :
+#Initially I expected BPE to learn meaningful words and subwords immediately, but because my first implementation operated 
+#directly on the raw character stream, it also learned merges involving whitespace and newline characters.
+
+#For example, frequent pairs around spaces could become merge candidates.
+
+#That made me realize that practical BPE implementations need a pre-tokenization or boundary-handling stage rather
+#than blindly merging arbitrary adjacent characters across the entire corpus.
+
