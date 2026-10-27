@@ -52,7 +52,7 @@ where:
     u_w   : output embedding of the positive context word
     u_n_i : output embedding of a negative sample
 
-This educational implementation uses uniform negative sampling.
+This is educational implementation and uses uniform negative sampling.
 It does not implement the unigram^0.75 distribution used by
 the original Word2Vec negative-sampling implementation.
 """

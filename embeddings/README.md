@@ -263,3 +263,126 @@ Implemented three educational baselines:
 **Current limitations:**
 - Small training corpus and vocabulary.
 - No held-out evaluation set
+
+## GloVe — Global Vectors for Word Representation
+
+Implemented a GloVe embedding model from scratch using NumPy.
+
+**Core concept:**
+
+GloVe learns word vectors from global word–word co-occurrence statistics rather than predicting context words directly as Word2Vec does.
+
+**Pipeline:**
+
+Corpus  
+→ Tokenization  
+→ Vocabulary construction  
+→ Word–word co-occurrence matrix  
+→ Co-occurrence weighting  
+→ Embedding and bias initialization  
+→ Weighted least-squares objective  
+→ Analytical gradients  
+→ Gradient descent  
+→ Learned word representations
+
+**Implemented:**
+- Word–word co-occurrence counting within a context window
+- Co-occurrence matrix construction
+- GloVe weighting function
+- Weighted squared-error objective
+- Word embeddings and bias terms
+- Analytical gradients
+- Gradient descent
+- Multi-step optimization
+- Numerical gradient checking
+
+**Experiment:**
+- Corpus: `"the cat sat on the mat"`
+- Vocabulary size: 5
+- Context window: 1
+- Training loss reduction: 83.80%
+- Gradient checker: passed
+
+**Important observations:**
+- GloVe learns representations by approximating relationships between word vectors and the logarithm of observed co-occurrence counts.
+- The weighting function reduces the influence of extremely frequent co-occurrences.
+- Successful gradient checking provides evidence that the analytical gradients agree with numerical approximations.
+- The small corpus validates implementation mechanics but does not establish semantic quality or generalization.
+
+**Current limitations:**
+- Small corpus and vocabulary
+- No held-out semantic evaluation
+- No comparison against a production GloVe implementation
+- No large-corpus performance benchmarks
+
+## FastText — Subword Embeddings from Scratch
+
+Implemented a simplified FastText-style Skip-Gram with Negative Sampling (SGNS) model using NumPy.
+
+**Core concept:**
+
+Instead of representing each input word using only a dedicated word vector, FastText constructs its input representation from character n-gram embeddings. This allows a word to receive a vector even when the complete word was not observed during training, provided that some of its n-grams are known.
+
+**Pipeline:**
+
+Tokenized Corpus  
+→ Whole-Word and Subword Vocabularies  
+→ Character N-gram Extraction  
+→ Subword Embedding Lookup  
+→ Input Word-Vector Composition  
+→ Center–Context Pair Generation  
+→ Negative Sampling  
+→ SGNS Loss  
+→ Analytical Gradients  
+→ Parameter Updates  
+→ Learned Subword Representations
+
+**Implemented:**
+- Character n-gram extraction with boundary markers
+- Deterministic subword vocabulary
+- Subword-to-ID mappings
+- Word-vector composition from subword embeddings
+- Persistent context embedding table
+- Negative-sampling objective
+- Analytical gradients
+- Numerical gradient checking
+- Center–context pair generation
+- Negative-word sampling
+- Corpus-level multi-epoch training
+- Reproducible initialization and training
+- Out-of-vocabulary vector construction
+
+**Experiments:**
+
+Training experiment:
+- Corpus: `"the cat sat on the mat"` repeated three times
+- Embedding dimension: 16
+- Epochs: 20
+- Context window: 2
+- Negative samples per positive pair: 3
+- Initial epoch loss: 2.7060
+- Final epoch loss: 1.9869
+- Relative loss reduction: approximately 26.58%
+- Context embedding matrix shape: `(5, 16)`
+
+OOV vector-construction experiment:
+- Known word: `"playing"`
+- Unseen word: `"playful"`
+- Embedding dimension: 16
+- OOV vector shape: `(16,)`
+- All vector values finite: True
+- OOV vector norm: 1.1161
+
+**Important observations:**
+- Multiple character n-grams contribute to the input representation of a word.
+- Words sharing character n-grams can share learned subword parameters.
+- The model can construct a vector for a word absent from the whole-word training vocabulary if it has known subwords.
+- Decreasing training loss indicates optimization progress, not necessarily semantic quality.
+- The OOV experiment validates vector construction; because its embeddings were initialized but not trained, it does not establish semantic generalization.
+
+**Current limitations:**
+- Small, repetitive training corpus
+- Uniform negative sampling rather than the conventional unigram distribution raised to the 3/4 power
+- No held-out semantic evaluation
+- No comparison against the official FastText implementation
+- No large-corpus performance or memory benchmarks
